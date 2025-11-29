@@ -25,6 +25,7 @@ function createCombinePushMessage(options: Options) {
     const title = `【森空岛每日签到】`
     const content = messages.join('\n\n')
     if (options.withServerChan) {
+      console.log('Sending ServerChan Message')
       await serverChan(options.withServerChan, title, content)
     }
     if (options.withBark) {
