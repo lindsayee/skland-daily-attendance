@@ -3,7 +3,7 @@ import { setTimeout } from 'node:timers/promises'
 import { attendance, auth, getBinding, signIn } from '@skland-x/core'
 import { bark, messagePusher, serverChan } from '@skland-x/notification'
 
-interface Options {
+export interface Options {
   /** server 酱推送功能的启用，false 或者 server 酱的token */
   withServerChan?: false | string
   /** bark 推送功能的启用，false 或者 bark 的 URL */
@@ -12,7 +12,7 @@ interface Options {
   withMessagePusher?: false | string
 }
 
-function createCombinePushMessage(options: Options) {
+export function createCombinePushMessage(options: Options) {
   const messages: string[] = []
   let hasError = false
   const logger = (message: string, error?: boolean) => {
@@ -46,15 +46,13 @@ function createCombinePushMessage(options: Options) {
   return [logger, push, add] as const
 }
 
-export async function doAttendanceForAccount(token: string, options: Options) {
+export async function doAttendanceForAccount(token: string, logger: (message: string, error?: boolean) => void) {
   // console.log('doAttendanceForAccount options:', JSON.stringify(options, null, 2))
   const { code } = await auth(token)
   const { cred, token: signToken } = await signIn(code)
   const { list } = await getBinding(cred, signToken)
 
-  const [combineMessage, excutePushMessage, addMessage] = createCombinePushMessage(options)
-
-  addMessage('## 明日方舟签到')
+  logger('## 明日方舟签到')
 
   let successAttendance = 0
   const characterList = list.filter(i => i.appCode === 'arknights').map(i => i.bindingList).flat()
@@ -72,33 +70,33 @@ export async function doAttendanceForAccount(token: string, options: Options) {
         if (data) {
           if (data.code === 0 && data.message === 'OK') {
             const msg = `${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 签到成功${`, 获得了${data.data.awards.map(a => `「${a.resource.name}」${a.count}个`).join(',')}`}`
-            combineMessage(msg)
+            logger(msg)
             successAttendance++
             break // 签到成功，跳出重试循环
           }
           else {
             const msg = `${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 签到失败${`, 错误消息: ${data.message}\n\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}`
-            combineMessage(msg, true)
+            logger(msg, true)
             retries++ // 签到失败，增加重试计数器
           }
         }
         else {
-          combineMessage(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
+          logger(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
           break // 已经签到过，跳出重试循环
         }
       }
       catch (error: any) {
         if (error.response && error.response.status === 403) {
-          combineMessage(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
+          logger(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
           break // 已经签到过，跳出重试循环
         }
         else {
-          combineMessage(`签到过程中出现未知错误: ${error.message}`, true)
+          logger(`签到过程中出现未知错误: ${error.message}`, true)
           console.error('发生未知错误，工作流终止。')
           retries++ // 增加重试计数器
           if (retries >= maxRetries) {
             // console.error('达到最大重试次数，准备退出进程')
-            process.exit(1) // 达到最大重试次数，终止工作流
+            // process.exit(1) // 达到最大重试次数，终止工作流
           }
         }
       }
@@ -108,8 +106,8 @@ export async function doAttendanceForAccount(token: string, options: Options) {
   }))
 
   if (successAttendance !== 0)
-    combineMessage(`成功签到${successAttendance}个角色`)
+    logger(`成功签到${successAttendance}个角色`)
 
   // console.log('准备执行推送消息...')
-  await excutePushMessage()
+  // await excutePushMessage()
 }

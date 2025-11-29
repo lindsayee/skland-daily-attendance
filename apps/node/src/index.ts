@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import process from 'node:process'
-import { doAttendanceForAccount } from './attendance'
+import { createCombinePushMessage, doAttendanceForAccount } from './attendance'
 
 try {
   process.loadEnvFile('.env')
@@ -12,12 +12,15 @@ assert(typeof process.env.SKLAND_TOKEN === 'string', 'SKLAND_TOKEN 未设置')
 
 const accounts = process.env.SKLAND_TOKEN.split(',')
 
-for (const [index, token] of accounts.entries()) {
+const [logger, push] = createCombinePushMessage({
+  withServerChan: process.env.SERVER_CHAN_TOKEN || process.env.SERVERCHAN_SENDKEY,
+  withBark: process.env.BARK_URL,
+  withMessagePusher: process.env.MESSAGE_PUSHER_URL,
+})
+
+await Promise.all(accounts.map(async (token, index) => {
   console.log(`开始处理第 ${index + 1}/${accounts.length} 个账号`)
-  // eslint-disable-next-line antfu/no-top-level-await
-  await doAttendanceForAccount(token, {
-    withServerChan: process.env.SERVER_CHAN_TOKEN || process.env.SERVERCHAN_SENDKEY,
-    withBark: process.env.BARK_URL,
-    withMessagePusher: process.env.MESSAGE_PUSHER_URL,
-  })
-}
+  await doAttendanceForAccount(token, logger)
+}))
+
+await push()
