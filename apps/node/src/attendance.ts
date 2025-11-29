@@ -22,12 +22,12 @@ function createCombinePushMessage(options: Options) {
       hasError = true
   }
   const push = async () => {
-    console.log('Starting push logic...')
-    console.log('ServerChan configured:', !!options.withServerChan, options.withServerChan ? `(Length: ${options.withServerChan.length})` : '')
+    // console.log('Starting push logic...')
+    // console.log('ServerChan configured:', !!options.withServerChan, options.withServerChan ? `(Length: ${options.withServerChan.length})` : '')
     const title = `【森空岛每日签到】`
     const content = messages.join('\n\n')
     if (options.withServerChan) {
-      console.log('Sending ServerChan Message')
+      // console.log('Sending ServerChan Message')
       await serverChan(options.withServerChan, title, content)
     }
     if (options.withBark) {
@@ -47,7 +47,7 @@ function createCombinePushMessage(options: Options) {
 }
 
 export async function doAttendanceForAccount(token: string, options: Options) {
-  console.log('doAttendanceForAccount options:', JSON.stringify(options, null, 2))
+  // console.log('doAttendanceForAccount options:', JSON.stringify(options, null, 2))
   const { code } = await auth(token)
   const { cred, token: signToken } = await signIn(code)
   const { list } = await getBinding(cred, signToken)
@@ -97,7 +97,7 @@ export async function doAttendanceForAccount(token: string, options: Options) {
           console.error('发生未知错误，工作流终止。')
           retries++ // 增加重试计数器
           if (retries >= maxRetries) {
-            console.error('达到最大重试次数，准备退出进程')
+            // console.error('达到最大重试次数，准备退出进程')
             process.exit(1) // 达到最大重试次数，终止工作流
           }
         }
@@ -110,6 +110,6 @@ export async function doAttendanceForAccount(token: string, options: Options) {
   if (successAttendance !== 0)
     combineMessage(`成功签到${successAttendance}个角色`)
 
-  console.log('准备执行推送消息...')
+  // console.log('准备执行推送消息...')
   await excutePushMessage()
 }
