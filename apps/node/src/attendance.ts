@@ -23,6 +23,7 @@ function createCombinePushMessage(options: Options) {
   }
   const push = async () => {
     console.log('Starting push logic...')
+    console.log('ServerChan configured:', !!options.withServerChan, options.withServerChan ? `(Length: ${options.withServerChan.length})` : '')
     const title = `【森空岛每日签到】`
     const content = messages.join('\n\n')
     if (options.withServerChan) {
