@@ -46,20 +46,24 @@ export function createCombinePushMessage(options: Options) {
   return [logger, push, add] as const
 }
 
-export async function doAttendanceForAccount(token: string, logger: (message: string, error?: boolean) => void) {
+export async function doAttendanceForAccount(token: string) {
   // console.log('doAttendanceForAccount options:', JSON.stringify(options, null, 2))
   const { code } = await auth(token)
   const { cred, token: signToken } = await signIn(code)
   const { list } = await getBinding(cred, signToken)
 
-  logger('## 明日方舟签到')
+  const messages: { message: string, error?: boolean }[] = []
+  const logger = (message: string, error?: boolean) => {
+    messages.push({ message, error })
+    console[error ? 'error' : 'log'](message)
+  }
 
   let successAttendance = 0
   const characterList = list.filter(i => i.appCode === 'arknights').map(i => i.bindingList).flat()
   const maxRetries = Number.parseInt(process.env.MAX_RETRIES || '3', 10) // 添加最大重试次数
 
   await Promise.all(characterList.map(async (character) => {
-    console.log(`将签到第${successAttendance + 1}个角色`)
+    console.log(`将签到角色: ${character.nickName}`)
     let retries = 0 // 初始化重试计数器
     while (retries < maxRetries) {
       try {
@@ -69,29 +73,29 @@ export async function doAttendanceForAccount(token: string, logger: (message: st
         })
         if (data) {
           if (data.code === 0 && data.message === 'OK') {
-            const msg = `${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 签到成功${`, 获得了${data.data.awards.map(a => `「${a.resource.name}」${a.count}个`).join(',')}`}`
+            const msg = `[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 签到成功${`, 获得了${data.data.awards.map(a => `「${a.resource.name}」${a.count}个`).join(',')}`}`
             logger(msg)
             successAttendance++
             break // 签到成功，跳出重试循环
           }
           else {
-            const msg = `${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 签到失败${`, 错误消息: ${data.message}\n\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}`
+            const msg = `[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 签到失败${`, 错误消息: ${data.message}\n\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}`
             logger(msg, true)
             retries++ // 签到失败，增加重试计数器
           }
         }
         else {
-          logger(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
+          logger(`[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 今天已经签到过了`)
           break // 已经签到过，跳出重试循环
         }
       }
       catch (error: any) {
         if (error.response && error.response.status === 403) {
-          logger(`${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'}角色 ${successAttendance + 1} 今天已经签到过了`)
+          logger(`[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 今天已经签到过了`)
           break // 已经签到过，跳出重试循环
         }
         else {
-          logger(`签到过程中出现未知错误: ${error.message}`, true)
+          logger(`[${character.nickName}] 签到过程中出现未知错误: ${error.message}`, true)
           console.error('发生未知错误，工作流终止。')
           retries++ // 增加重试计数器
           if (retries >= maxRetries) {
@@ -105,9 +109,5 @@ export async function doAttendanceForAccount(token: string, logger: (message: st
     }
   }))
 
-  if (successAttendance !== 0)
-    logger(`成功签到${successAttendance}个角色`)
-
-  // console.log('准备执行推送消息...')
-  // await excutePushMessage()
+  return { successCount: successAttendance, messages }
 }

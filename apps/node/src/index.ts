@@ -18,9 +18,17 @@ const [logger, push] = createCombinePushMessage({
   withMessagePusher: process.env.MESSAGE_PUSHER_URL,
 })
 
+logger('## 明日方舟签到')
+
+let totalSuccess = 0
 await Promise.all(accounts.map(async (token, index) => {
   console.log(`开始处理第 ${index + 1}/${accounts.length} 个账号`)
-  await doAttendanceForAccount(token, logger)
+  const { successCount, messages } = await doAttendanceForAccount(token)
+  totalSuccess += successCount
+  messages.forEach(({ message, error }) => logger(message, error))
 }))
+
+if (totalSuccess !== 0)
+  logger(`本次共成功签到 ${totalSuccess} 个角色`)
 
 await push()
