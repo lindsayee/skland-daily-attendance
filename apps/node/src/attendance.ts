@@ -13,6 +13,8 @@ export interface Options {
   withMessagePusher?: false | string
   /** Qmsg 酱推送功能的启用，false 或者 sendkey */
   withQmsg?: false | string
+  /** Qmsg 酱推送目标 QQ 号（可选，支持逗号或数组） */
+  qmsgQQ?: string | string[]
 }
 
 export function createCombinePushMessage(options: Options) {
@@ -40,7 +42,7 @@ export function createCombinePushMessage(options: Options) {
       await messagePusher(options.withMessagePusher, title, content)
     }
     if (options.withQmsg) {
-      await qmsg(options.withQmsg, title, content)
+      await qmsg(options.withQmsg, title, content, options.qmsgQQ)
     }
     // quit with error
     if (hasError)
