@@ -14,6 +14,8 @@ on:
         required: false
       MESSAGE_PUSHER_URL:
         required: false
+      QMSG_SENDKEY:
+        required: false
       MAX_RETRIES:
         required: false
     inputs:
@@ -65,4 +67,5 @@ jobs:
           SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
           BARK_URL: ${{ secrets.BARK_URL }}
           MESSAGE_PUSHER_URL: ${{ secrets.MESSAGE_PUSHER_URL }}
+          QMSG_SENDKEY: ${{ secrets.QMSG_SENDKEY }}
           MAX_RETRIES: ${{ secrets.MAX_RETRIES }}

@@ -16,6 +16,7 @@ const [logger, push] = createCombinePushMessage({
   withServerChan: process.env.SERVER_CHAN_TOKEN || process.env.SERVERCHAN_SENDKEY,
   withBark: process.env.BARK_URL,
   withMessagePusher: process.env.MESSAGE_PUSHER_URL,
+  withQmsg: process.env.QMSG_SENDKEY,
 })
 
 logger('## 明日方舟签到')

@@ -2,6 +2,7 @@ import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
 import { attendance, auth, getBinding, signIn } from '@skland-x/core'
 import { bark, messagePusher, serverChan } from '@skland-x/notification'
+import { qmsg } from '@skland-x/notification'
 
 export interface Options {
   /** server 酱推送功能的启用，false 或者 server 酱的token */
@@ -10,6 +11,8 @@ export interface Options {
   withBark?: false | string
   /** 消息推送功能的启用，false 或者 message-pusher 的 WebHook URL */
   withMessagePusher?: false | string
+  /** Qmsg 酱推送功能的启用，false 或者 sendkey */
+  withQmsg?: false | string
 }
 
 export function createCombinePushMessage(options: Options) {
@@ -35,6 +38,9 @@ export function createCombinePushMessage(options: Options) {
     }
     if (options.withMessagePusher) {
       await messagePusher(options.withMessagePusher, title, content)
+    }
+    if (options.withQmsg) {
+      await qmsg(options.withQmsg, title, content)
     }
     // quit with error
     if (hasError)
