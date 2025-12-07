@@ -20,11 +20,15 @@ export async function qmsg(sendkey: string, title: string, content: string, qq?:
     payload.qq = qq.trim()
   }
   try {
+    const form = new URLSearchParams(payload)
     const data = await ofetch<{ success: boolean; reason?: string }>(
       `https://qmsg.zendee.cn/send/${sendkey}`,
       {
         method: 'POST',
-        body: payload,
+        body: form,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       },
     )
     if ((data as any).success) {
