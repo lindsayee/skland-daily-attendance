@@ -73,6 +73,8 @@ export async function doAttendanceForAccount(token: string) {
   await Promise.all(characterList.map(async (character) => {
     console.log(`将签到角色: ${character.nickName}`)
     let retries = 0 // 初始化重试计数器
+    let succeeded = false
+    let lastErrorMessage: string | undefined
     while (retries < maxRetries) {
       try {
         const data = await attendance(cred, signToken, {
@@ -84,11 +86,13 @@ export async function doAttendanceForAccount(token: string) {
             const msg = `[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 签到成功${`, 获得了${data.data.awards.map(a => `「${a.resource.name}」${a.count}个`).join(',')}`}`
             logger(msg)
             successAttendance++
+            succeeded = true
             break // 签到成功，跳出重试循环
           }
           else {
             const msg = `[${character.nickName}] ${(Number(character.channelMasterId) - 1) ? 'B 服' : '官服'} 签到失败${`, 错误消息: ${data.message}\n\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}`
             logger(msg, true)
+            lastErrorMessage = data.message
             retries++ // 签到失败，增加重试计数器
           }
         }
@@ -103,17 +107,23 @@ export async function doAttendanceForAccount(token: string) {
           break // 已经签到过，跳出重试循环
         }
         else {
-          logger(`[${character.nickName}] 签到过程中出现未知错误: ${error.message}`, true)
-          console.error('发生未知错误，工作流终止。')
+          const isTimeout = typeof error?.message === 'string' && /timeout|Connect Timeout/i.test(error.message)
+          const reason = isTimeout ? `网络超时：${error.message}` : `未知错误：${error.message}`
+          logger(`[${character.nickName}] 签到过程中出现错误: ${reason}`, true)
+          lastErrorMessage = reason
           retries++ // 增加重试计数器
-          if (retries >= maxRetries) {
-            // console.error('达到最大重试次数，准备退出进程')
-            // process.exit(1) // 达到最大重试次数，终止工作流
-          }
+          // 达到最大重试次数时不再中断流程，后续统一记录失败
         }
       }
-      // 多个角色之间的延时
-      await setTimeout(3000)
+      // 重试退避延时（1s, 2s, 4s... 上限10s）
+      if (!succeeded && retries < maxRetries) {
+        const delay = Math.min(10000, 1000 * (2 ** (retries - 1 || 0)))
+        await setTimeout(delay)
+      }
+    }
+    // 若用尽重试仍未成功，记录最终失败但不影响后续角色
+    if (!succeeded && retries >= maxRetries) {
+      logger(`[${character.nickName}] 连续尝试 ${retries} 次仍失败，已跳过。最后错误：${lastErrorMessage ?? '无详细信息'}`, true)
     }
   }))
 
