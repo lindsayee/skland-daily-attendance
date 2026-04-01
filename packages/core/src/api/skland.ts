@@ -1,4 +1,4 @@
-import type { AttendanceResponse, BindingResponse, CredResponse, GetAttendanceResponse } from '../types'
+import type { AttendanceResponse, BindingResponse, CredResponse, EndfieldAttendanceResponse, GetAttendanceResponse } from '../types'
 import { createFetch } from 'ofetch'
 import { command_header, getDid, onSignatureRequest } from '../utils'
 
@@ -92,4 +92,29 @@ export async function attendance(cred: string, token: string, body: { uid: strin
     )
     return data
   }
+}
+
+/**
+ * 终末地每日签到
+ * @param cred 鹰角网络通行证账号的登录凭证
+ * @param token 森空岛用户的 token
+ * @param roleId 角色 ID
+ * @param serverId 服务器 ID
+ */
+export async function endfieldAttendance(cred: string, token: string, roleId: string, serverId: string) {
+  const data = await fetch<EndfieldAttendanceResponse>(
+    '/web/v1/game/endfield/attendance',
+    {
+      method: 'POST',
+      headers: {
+        ...command_header,
+        'token': token,
+        'cred': cred,
+        'sk-game-role': `3_${roleId}_${serverId}`,
+        'referer': 'https://game.skland.com/',
+        'origin': 'https://game.skland.com',
+      },
+    },
+  )
+  return data
 }

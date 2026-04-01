@@ -13,6 +13,12 @@ export interface AuthResponse {
 
 export type CredResponse = SklandResponse<{ cred: string, userId: string, token: string }>
 
+export interface BindingRole {
+  roleId: string
+  serverId: string
+  nickname: string
+}
+
 export interface BindingUserItem {
   uid: string
   isOfficial: boolean
@@ -21,6 +27,7 @@ export interface BindingUserItem {
   channelName: string
   nickName: string
   isDelete: boolean
+  roles?: BindingRole[]
 }
 
 export interface BindingUser {
@@ -68,4 +75,19 @@ export type AttendanceResponse = SklandResponse<{
     }
     count: number
   }[]
+}>
+
+export type EndfieldAttendanceResponse = SklandResponse<{
+  awardIds: {
+    id: string
+    count?: number
+  }[]
+  resourceInfoMap: {
+    [key: string]: {
+      id: string
+      name: string
+      type: string
+      count?: number
+    }
+  }
 }>
