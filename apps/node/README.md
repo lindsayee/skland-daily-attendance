@@ -33,6 +33,49 @@ Node.js 环境运行的森空岛自动签到服务，可以使用 Github Action 
 
 自行设置 `MAX_RETRIES` 的 secret，值为错误重试次数，默认 3 次。
 
+---
+
+## 终末地签到
+
+终末地签到使用独立的入口和配置，与明日方舟签到互不影响。
+
+### 配置项
+
+| 环境变量 / Secret | 必填 | 说明 |
+|---|---|---|
+| `SKLAND_ENDFIELD_TOKEN` | ✅ | 终末地账号的 token（获取方式同上），多账号用半角逗号 `,` 分隔 |
+| `QMSG_SENDKEY` | ❌ | Qmsg 酱推送密钥（与明日方舟签到复用同一个） |
+| `QMSG_ENDFIELD_QQ` | ❌ | 终末地签到推送的目标 QQ 号，多个用半角逗号 `,` 分隔 |
+| `MAX_RETRIES` | ❌ | 错误重试次数，默认 3 次 |
+
+### GitHub Actions
+
+在仓库 Settings -> Secrets 中添加上述 secret 后，进入 Actions 页面，找到 `endfield-attendance` 工作流，点击 `Run workflow` 手动执行一次即可激活。
+
+### 本地运行
+
+1. 在项目根目录安装依赖：
+
+```bash
+pnpm install
+```
+
+2. 在 `apps/node` 目录下创建 `.env` 文件：
+
+```env
+SKLAND_ENDFIELD_TOKEN=你的token
+QMSG_SENDKEY=你的sendkey
+QMSG_ENDFIELD_QQ=目标QQ号
+```
+
+3. 运行终末地签到：
+
+```bash
+pnpm -C apps/node start:endfield
+```
+
+> 明日方舟签到仍使用原来的命令 `pnpm -C apps/node start`
+
 ## 启动 Github Action
 
 

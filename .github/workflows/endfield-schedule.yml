@@ -1,0 +1,65 @@
+name: endfield-attendance
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      SKLAND_ENDFIELD_TOKEN:
+        required: true
+      QMSG_SENDKEY:
+        required: false
+      QMSG_ENDFIELD_QQ:
+        required: false
+      MAX_RETRIES:
+        required: false
+    inputs:
+      repository:
+        description: 'The repository to run the workflow on'
+        default: 'enpitsuLin/skland-daily-attendance'
+        required: false
+        type: string
+
+jobs:
+  endfield-attendance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run endfield daily attendance
+        run: pnpm -C "./apps/node" start:endfield
+        env:
+          SKLAND_ENDFIELD_TOKEN: ${{ secrets.SKLAND_ENDFIELD_TOKEN }}
+          QMSG_SENDKEY: ${{ secrets.QMSG_SENDKEY }}
+          QMSG_ENDFIELD_QQ: ${{ secrets.QMSG_ENDFIELD_QQ }}
+          MAX_RETRIES: ${{ secrets.MAX_RETRIES }}

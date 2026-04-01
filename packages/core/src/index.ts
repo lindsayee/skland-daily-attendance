@@ -1,5 +1,5 @@
-import { attendance, auth, getBinding, signIn } from './api'
+import { attendance, auth, endfieldAttendance, getBinding, signIn } from './api'
 
 export * from './types'
 
-export { attendance, auth, getBinding, signIn }
+export { attendance, auth, endfieldAttendance, getBinding, signIn }
