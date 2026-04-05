@@ -1,9 +1,9 @@
 import { ofetch } from 'ofetch'
 
-export async function bark(url: string, title: string, content: string) {
+export async function bark(url: string, title: string, content: string): Promise<boolean> {
   if (typeof url !== 'string' || !url.startsWith('https://')) {
     console.error('Wrong type for Bark URL.')
-    return
+    return false
   }
 
   const payload = {
@@ -20,8 +20,10 @@ export async function bark(url: string, title: string, content: string) {
       },
     )
     console.debug(data)
+    return true
   }
   catch (error) {
     console.error(`[Bark] Error: ${error}`)
+    return false
   }
 }

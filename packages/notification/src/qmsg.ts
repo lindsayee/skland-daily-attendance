@@ -3,10 +3,10 @@ import { ofetch } from 'ofetch'
 // Qmsg酱: https://qmsg.zendee.cn/
 // 发送接口: POST https://qmsg.zendee.cn/send/{key}
 // 参数: msg=内容
-export async function qmsg(sendkey: string, title: string, content: string, qq?: string | string[]) {
+export async function qmsg(sendkey: string, title: string, content: string, qq?: string | string[]): Promise<boolean> {
   if (typeof sendkey !== 'string' || sendkey.trim() === '') {
     console.error('Wrong type for Qmsg sendkey.')
-    return
+    return false
   }
   const payload: Record<string, string> = {
     msg: `${title}\n\n${content}`,
@@ -33,11 +33,14 @@ export async function qmsg(sendkey: string, title: string, content: string, qq?:
     )
     if ((data as any).success) {
       console.log('[Qmsg] Send message successfully.')
+      return true
     } else {
       console.log(`[Qmsg][Send Message Response] ${JSON.stringify(data)}`)
+      return false
     }
   }
   catch (error) {
     console.error(`[Qmsg] Error: ${error}`)
+    return false
   }
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import process from 'node:process'
-import { createEndfieldPushMessage, doEndfieldAttendanceForAccount } from './endfield-attendance'
+import { doEndfieldAttendanceForAccount } from './endfield-attendance'
+import { createPushMessage, loadEmailConfig } from './push'
 
 try {
   process.loadEnvFile('.env')
@@ -12,9 +13,13 @@ assert(typeof process.env.SKLAND_ENDFIELD_TOKEN === 'string', 'SKLAND_ENDFIELD_T
 
 const accounts = process.env.SKLAND_ENDFIELD_TOKEN.split(',')
 
-const [logger, push] = createEndfieldPushMessage({
-  withQmsg: process.env.QMSG_SENDKEY,
+const [logger, push] = createPushMessage('【终末地每日签到】', {
+  withServerChan: process.env.ENDFIELD_SERVERCHAN_SENDKEY || process.env.SERVERCHAN_SENDKEY,
+  withBark: process.env.ENDFIELD_BARK_URL || process.env.BARK_URL,
+  withMessagePusher: process.env.ENDFIELD_MESSAGE_PUSHER_URL || process.env.MESSAGE_PUSHER_URL,
+  withQmsg: process.env.ENDFIELD_QMSG_SENDKEY || process.env.QMSG_SENDKEY,
   qmsgQQ: (process.env.QMSG_ENDFIELD_QQ ? process.env.QMSG_ENDFIELD_QQ.split(',') : undefined),
+  withEmail: loadEmailConfig(),
 })
 
 logger('## 终末地签到')

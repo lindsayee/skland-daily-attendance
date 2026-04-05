@@ -2,48 +2,15 @@ import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
 import type { BindingRole } from '@skland-x/core'
 import { auth, endfieldAttendance, getBinding, signIn } from '@skland-x/core'
-import { qmsg } from '@skland-x/notification'
-
-export interface EndfieldOptions {
-  /** Qmsg 酱推送功能的启用，false 或者 sendkey */
-  withQmsg?: false | string
-  /** Qmsg 酱推送目标 QQ 号（可选，支持逗号或数组） */
-  qmsgQQ?: string | string[]
-}
-
-export function createEndfieldPushMessage(options: EndfieldOptions) {
-  const messages: string[] = []
-  let hasError = false
-  const logger = (message: string, error?: boolean) => {
-    messages.push(message)
-    console[error ? 'error' : 'log'](message)
-    if (error && !hasError)
-      hasError = true
-  }
-  const push = async () => {
-    const title = `【终末地每日签到】`
-    const content = messages.join('\n\n')
-    if (options.withQmsg) {
-      await qmsg(options.withQmsg, title, content, options.qmsgQQ)
-    }
-    if (hasError)
-      process.exit(1)
-  }
-  return [logger, push] as const
-}
+import { createAccountLogger } from './push'
 
 export async function doEndfieldAttendanceForAccount(token: string) {
   const { code } = await auth(token)
   const { cred, token: signToken } = await signIn(code)
   const { list } = await getBinding(cred, signToken)
 
-  const messages: { message: string, error?: boolean }[] = []
-  const logger = (message: string, error?: boolean) => {
-    messages.push({ message, error })
-    console[error ? 'error' : 'log'](message)
-  }
+  const { messages, logger, addSuccess, getSuccessCount } = createAccountLogger()
 
-  let successAttendance = 0
   const endfieldBindings = list.filter(i => i.appCode === 'endfield')
 
   if (endfieldBindings.length === 0) {
@@ -53,7 +20,6 @@ export async function doEndfieldAttendanceForAccount(token: string) {
 
   const maxRetries = Number.parseInt(process.env.MAX_RETRIES || '3', 10)
 
-  // 终末地使用 roles 列表，每个 role 需要单独签到
   const allRoles: { role: BindingRole, nickName: string }[] = []
   for (const binding of endfieldBindings) {
     for (const item of binding.bindingList) {
@@ -89,7 +55,7 @@ export async function doEndfieldAttendanceForAccount(token: string) {
           })
           const msg = `[${nickName}] 终末地签到成功${awardTexts.length > 0 ? `, 获得了${awardTexts.join(',')}` : ''}`
           logger(msg)
-          successAttendance++
+          addSuccess()
           succeeded = true
           break
         }
@@ -123,5 +89,5 @@ export async function doEndfieldAttendanceForAccount(token: string) {
     }
   }))
 
-  return { successCount: successAttendance, messages }
+  return { successCount: getSuccessCount(), messages }
 }

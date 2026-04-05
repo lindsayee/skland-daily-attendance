@@ -25,34 +25,72 @@ Node.js 环境运行的森空岛自动签到服务，可以使用 Github Action 
 
 建立名为 `SKLAND_TOKEN` 的 secret，值为上一步获取 content，最后点击 Add secret，如果需要多账号支持，请使用半角逗号`,`分割
 
-### 消息推送
+---
 
-自行设置 `SERVERCHAN_SENDKEY`, `BARK_URL`, `MESSAGE_PUSHER_URL` 的 secret，值为对应的服务推送需要的 url 或者密钥。
+## 明日方舟签到配置项
 
-### 错误重试
+| 环境变量 / Secret | 必填 | 说明 |
+|---|---|---|
+| `SKLAND_TOKEN` | ✅ | 明日方舟账号的 token，多账号用半角逗号 `,` 分隔 |
+| `SERVERCHAN_SENDKEY` | ❌ | Server 酱推送密钥 |
+| `BARK_URL` | ❌ | Bark 推送 URL（需以 `https://` 开头） |
+| `MESSAGE_PUSHER_URL` | ❌ | MessagePusher WebHook URL（需以 `https://` 开头） |
+| `QMSG_SENDKEY` | ❌ | Qmsg 酱推送密钥 |
+| `QMSG_QQ` | ❌ | Qmsg 推送目标 QQ 号，多个用半角逗号 `,` 分隔 |
+| `MAX_RETRIES` | ❌ | 错误重试次数，默认 `3` |
 
-自行设置 `MAX_RETRIES` 的 secret，值为错误重试次数，默认 3 次。
+> 所有推送渠道并行独立执行，单个渠道失败不影响其他渠道。
 
 ---
 
-## 终末地签到
+## 终末地签到配置项
 
 终末地签到使用独立的入口和配置，与明日方舟签到互不影响。
-
-### 配置项
 
 | 环境变量 / Secret | 必填 | 说明 |
 |---|---|---|
 | `SKLAND_ENDFIELD_TOKEN` | ✅ | 终末地账号的 token（获取方式同上），多账号用半角逗号 `,` 分隔 |
-| `QMSG_SENDKEY` | ❌ | Qmsg 酱推送密钥（与明日方舟签到复用同一个） |
-| `QMSG_ENDFIELD_QQ` | ❌ | 终末地签到推送的目标 QQ 号，多个用半角逗号 `,` 分隔 |
-| `MAX_RETRIES` | ❌ | 错误重试次数，默认 3 次 |
+| `ENDFIELD_SERVERCHAN_SENDKEY` | ❌ | 终末地专用 Server 酱推送密钥，未设置则回退到 `SERVERCHAN_SENDKEY` |
+| `ENDFIELD_BARK_URL` | ❌ | 终末地专用 Bark 推送 URL，未设置则回退到 `BARK_URL` |
+| `ENDFIELD_MESSAGE_PUSHER_URL` | ❌ | 终末地专用 MessagePusher URL，未设置则回退到 `MESSAGE_PUSHER_URL` |
+| `ENDFIELD_QMSG_SENDKEY` | ❌ | 终末地专用 Qmsg 酱推送密钥，未设置则回退到 `QMSG_SENDKEY` |
+| `QMSG_ENDFIELD_QQ` | ❌ | 终末地推送目标 QQ 号，多个用半角逗号 `,` 分隔 |
+| `MAX_RETRIES` | ❌ | 错误重试次数，默认 `3` |
 
-### GitHub Actions
+---
+
+## 邮件回退配置（通用）
+
+当所有推送渠道均失败时，系统会尝试通过邮件发送通知。需同时配置以下所有必填项才会启用：
+
+| 环境变量 / Secret | 必填 | 说明 |
+|---|---|---|
+| `SMTP_HOST` | ✅ | SMTP 服务器地址，如 `smtp.qq.com` |
+| `SMTP_PORT` | ❌ | SMTP 端口，默认 `465` |
+| `SMTP_SECURE` | ❌ | 是否使用 TLS，默认 `true`，设为 `false` 关闭 |
+| `SMTP_USER` | ✅ | 发件邮箱地址 |
+| `SMTP_PASS` | ✅ | 邮箱密码或授权码 |
+| `EMAIL_TO` | ✅ | 收件人邮箱地址 |
+
+---
+
+## GitHub Actions
+
+### 明日方舟签到
+
+> Actions 默认为关闭状态，Fork 之后需要手动执行一次，若成功运行其才会激活。
+
+返回项目主页面，点击上方的`Actions`，再点击左侧的`attendance`，再点击`Run workflow`
+
+### 终末地签到
 
 在仓库 Settings -> Secrets 中添加上述 secret 后，进入 Actions 页面，找到 `endfield-attendance` 工作流，点击 `Run workflow` 手动执行一次即可激活。
 
-### 本地运行
+> 本仓库使用了 `Actions` 自动活跃工作流，需要手动执行一次，之后就不用管 `Actions` 了
+
+---
+
+## 本地运行
 
 1. 在项目根目录安装依赖：
 
@@ -60,33 +98,44 @@ Node.js 环境运行的森空岛自动签到服务，可以使用 Github Action 
 pnpm install
 ```
 
-2. 在 `apps/node` 目录下创建 `.env` 文件：
+2. 在 `apps/node` 目录下创建 `.env` 文件，按需填入配置项：
 
 ```env
+# 明日方舟
+SKLAND_TOKEN=你的token
+
+# 终末地
 SKLAND_ENDFIELD_TOKEN=你的token
+
+# 推送渠道（按需配置）
+SERVERCHAN_SENDKEY=你的sendkey
+BARK_URL=https://your-bark-url
+MESSAGE_PUSHER_URL=https://your-webhook-url
 QMSG_SENDKEY=你的sendkey
+QMSG_QQ=目标QQ号
+
+# 终末地专用推送（可选，未设置时回退到上面的通用配置）
+ENDFIELD_QMSG_SENDKEY=终末地专用sendkey
 QMSG_ENDFIELD_QQ=目标QQ号
+
+# 邮件回退（可选）
+SMTP_HOST=smtp.qq.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your@email.com
+SMTP_PASS=your-password
+EMAIL_TO=receiver@email.com
 ```
 
-3. 运行终末地签到：
+3. 运行签到：
 
 ```bash
+# 明日方舟签到
+pnpm -C apps/node start
+
+# 终末地签到
 pnpm -C apps/node start:endfield
 ```
-
-> 明日方舟签到仍使用原来的命令 `pnpm -C apps/node start`
-
-## 启动 Github Action
-
-
-> Actions 默认为关闭状态，Fork 之后需要手动执行一次，若成功运行其才会激活。
-
-返回项目主页面，点击上方的`Actions`，再点击左侧的`attendance`，再点击`Run workflow`
-
-至此，部署完毕。
-
-> ~~注意：github actions 会对60天没有活动的仓库自动禁用，你可能要主动关注一下 github actions 的运行情况（一般会发邮件通知 actions 执行失败）~~
-> 本仓库使用了 `Actions` 自动活跃工作流，需要手动执行一次，之后就不用管 `Actions` 了
 
 ## Docker 运行
 
