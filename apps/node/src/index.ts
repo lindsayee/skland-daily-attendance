@@ -13,12 +13,14 @@ assert(typeof process.env.SKLAND_TOKEN === 'string', 'SKLAND_TOKEN 未设置')
 
 const accounts = process.env.SKLAND_TOKEN.split(',')
 
+const adminQQ = process.env.QMSG_ADMIN_QQ || process.env.ADMIN_QQ
 const [logger, push] = createPushMessage('【森空岛每日签到】', {
   withServerChan: process.env.SERVER_CHAN_TOKEN || process.env.SERVERCHAN_SENDKEY,
   withBark: process.env.BARK_URL,
   withMessagePusher: process.env.MESSAGE_PUSHER_URL,
   withQmsg: process.env.QMSG_SENDKEY,
   qmsgQQ: (process.env.QMSG_QQ ? process.env.QMSG_QQ.split(',') : undefined),
+  qmsgAdminQQ: adminQQ ? adminQQ.split(',') : undefined,
   withEmail: loadEmailConfig(),
 })
 

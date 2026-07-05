@@ -23,6 +23,8 @@ export interface PushOptions {
   withQmsg?: false | string
   /** Qmsg 酱推送目标 QQ 号（可选，支持逗号或数组） */
   qmsgQQ?: string | string[]
+  /** 管理员 Qmsg 推送目标 QQ 号（可选，支持逗号或数组） */
+  qmsgAdminQQ?: string | string[]
   /** 邮件回退配置，当所有推送渠道都失败时用于发送邮件 */
   withEmail?: false | EmailConfig
 }
@@ -85,6 +87,14 @@ export function createPushMessage(title: string, options: PushOptions) {
         console.log('所有推送渠道均失败，尝试通过邮件发送通知...')
         await sendEmail(options.withEmail, title, content)
       }
+    }
+
+    // 有错误且配置了管理员 QQ 时，额外通过 Qmsg 发送管理员通知
+    if (hasError && options.withQmsg && options.qmsgAdminQQ && options.qmsgAdminQQ.length > 0) {
+      const adminTitle = `[管理员通知] ${title}`
+      const adminResult = await qmsg(options.withQmsg, adminTitle, content, options.qmsgAdminQQ)
+      if (!adminResult)
+        console.error('[Qmsg Admin] 管理员通知发送失败')
     }
 
     // quit with error

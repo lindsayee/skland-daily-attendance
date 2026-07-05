@@ -2,13 +2,30 @@ import process from 'node:process'
 import { setTimeout } from 'node:timers/promises'
 import { attendance, auth, getBinding, signIn } from '@skland-x/core'
 import { createAccountLogger } from './push'
+import { retryWithBackoff } from './utils'
 
 export async function doAttendanceForAccount(token: string) {
-  const { code } = await auth(token)
-  const { cred, token: signToken } = await signIn(code)
-  const { list } = await getBinding(cred, signToken)
-
   const { messages, logger, addSuccess, getSuccessCount } = createAccountLogger()
+
+  let code: string
+  let cred: string
+  let signToken: string
+  let list: Awaited<ReturnType<typeof getBinding>>['list']
+
+  try {
+    const authResult = await retryWithBackoff(() => auth(token))
+    code = authResult.code
+    const signInResult = await retryWithBackoff(() => signIn(code))
+    cred = signInResult.cred
+    signToken = signInResult.token
+    const bindingResult = await retryWithBackoff(() => getBinding(cred, signToken))
+    list = bindingResult.list
+  }
+  catch (error: any) {
+    const reason = typeof error?.message === 'string' ? error.message : String(error)
+    logger(`账户认证/获取绑定信息失败：${reason}`, true)
+    return { successCount: 0, messages }
+  }
 
   const characterList = list.filter(i => i.appCode === 'arknights').map(i => i.bindingList).flat()
   const maxRetries = Number.parseInt(process.env.MAX_RETRIES || '3', 10)
@@ -52,7 +69,7 @@ export async function doAttendanceForAccount(token: string) {
         else {
           const isTimeout = typeof error?.message === 'string' && /timeout|Connect Timeout/i.test(error.message)
           const reason = isTimeout ? `网络超时：${error.message}` : `未知错误：${error.message}`
-          logger(`[${character.nickName}] 签到过程中出现错误: ${reason}`, true)
+          logger(`[${character.nickName}] 签到过程中出现错误: ${reason}`)
           lastErrorMessage = reason
           retries++
         }

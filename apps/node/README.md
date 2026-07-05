@@ -37,6 +37,7 @@ Node.js 环境运行的森空岛自动签到服务，可以使用 Github Action 
 | `MESSAGE_PUSHER_URL` | ❌ | MessagePusher WebHook URL（需以 `https://` 开头） |
 | `QMSG_SENDKEY` | ❌ | Qmsg 酱推送密钥 |
 | `QMSG_QQ` | ❌ | Qmsg 推送目标 QQ 号，多个用半角逗号 `,` 分隔 |
+| `QMSG_ADMIN_QQ` | ❌ | 管理员 Qmsg 推送目标 QQ 号，失败时额外通知管理员，可与 `QMSG_QQ` 不同 |
 | `MAX_RETRIES` | ❌ | 错误重试次数，默认 `3` |
 
 > 所有推送渠道并行独立执行，单个渠道失败不影响其他渠道。
@@ -55,6 +56,7 @@ Node.js 环境运行的森空岛自动签到服务，可以使用 Github Action 
 | `ENDFIELD_MESSAGE_PUSHER_URL` | ❌ | 终末地专用 MessagePusher URL，未设置则回退到 `MESSAGE_PUSHER_URL` |
 | `ENDFIELD_QMSG_SENDKEY` | ❌ | 终末地专用 Qmsg 酱推送密钥，未设置则回退到 `QMSG_SENDKEY` |
 | `QMSG_ENDFIELD_QQ` | ❌ | 终末地推送目标 QQ 号，多个用半角逗号 `,` 分隔 |
+| `QMSG_ADMIN_QQ` | ❌ | 管理员 Qmsg 推送目标 QQ 号，失败时额外通知管理员，可与 `QMSG_QQ` 不同 |
 | `MAX_RETRIES` | ❌ | 错误重试次数，默认 `3` |
 
 ---

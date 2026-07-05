@@ -13,12 +13,14 @@ assert(typeof process.env.SKLAND_ENDFIELD_TOKEN === 'string', 'SKLAND_ENDFIELD_T
 
 const accounts = process.env.SKLAND_ENDFIELD_TOKEN.split(',')
 
+const adminQQ = process.env.QMSG_ADMIN_QQ || process.env.ADMIN_QQ
 const [logger, push] = createPushMessage('【终末地每日签到】', {
-  withServerChan: process.env.ENDFIELD_SERVERCHAN_SENDKEY || process.env.SERVERCHAN_SENDKEY,
+  withServerChan: process.env.ENDFIELD_SERVERCHAN_SENDKEY || process.env.SERVER_CHAN_TOKEN || process.env.SERVERCHAN_SENDKEY,
   withBark: process.env.ENDFIELD_BARK_URL || process.env.BARK_URL,
   withMessagePusher: process.env.ENDFIELD_MESSAGE_PUSHER_URL || process.env.MESSAGE_PUSHER_URL,
   withQmsg: process.env.ENDFIELD_QMSG_SENDKEY || process.env.QMSG_SENDKEY,
   qmsgQQ: (process.env.QMSG_ENDFIELD_QQ ? process.env.QMSG_ENDFIELD_QQ.split(',') : undefined),
+  qmsgAdminQQ: adminQQ ? adminQQ.split(',') : undefined,
   withEmail: loadEmailConfig(),
 })
 
